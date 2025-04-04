@@ -273,7 +273,7 @@ function GameOver(won)
         {
             for (let y = 0; y < GRID_SIZE; y++) 
             {
-                if (GameGrid[x][y].is_mine) 
+                if (GameGrid[x][y].is_mine && GameGrid[x][y].flag_img === undefined)
                 {
                     GameGrid[x][y].cell.classList.add("flagged");
                     FlagImage(GameGrid[x][y]);
