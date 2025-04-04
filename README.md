@@ -1,2 +1,3 @@
 # Minesweeper-JavaScript
-a Minesweeper game made using javascript
+
+a Budget-friendly Minesweeper game made using javascript.
