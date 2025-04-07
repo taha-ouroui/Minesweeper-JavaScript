@@ -1,6 +1,6 @@
 
 // GAME SETTINGS
-const GRID_SIZE = 12;
+const GRID_SIZE = 20;
 const DEBUG_MODE = false;
 const TOTAL_MINES = 10;
 const HIGHSCORE_KEY = "minesweeper-highscore";
@@ -39,6 +39,8 @@ let GameGrid = [];
 // after html is loaded
 function OnStart()
 {
+    GRID.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(20px, 1fr))`;
+    GRID.style.gridTemplateRows = `repeat(${GRID_SIZE}, minmax(20px, 1fr))`;
     LoadGrid();
 
     if (!DEBUG_MODE)
@@ -66,6 +68,14 @@ function OnStart()
         highscoreLabel.innerHTML = highscore;
     else
         highscoreLabel.innerHTML = "0";
+
+    const gridCells = document.querySelectorAll('.grid-cell');
+    const fontSize = 24 / GRID_SIZE;
+    
+    gridCells.forEach(cell => 
+    {
+        cell.style.fontSize = fontSize + "rem";
+    });
 }
 
 function LoadGrid()
