@@ -3,18 +3,8 @@
 const GRID_SIZE = 12;
 const DEBUG_MODE = false;
 const TOTAL_MINES = 10;
-
-// GAME
-const GRID = document.getElementById("grid-container");
-let flaggedCells = 0;
-let gameOver = false;
-let revealedCells = 0;
-let firstClick = true;
-
-// INFO BOARD
-const minesLeftLabel = document.getElementById("mines-left");
-const debugPosLabel = document.getElementById("debug-pos");
-const refreshButton = document.getElementById("refresh-btn");
+const HIGHSCORE_KEY = "minesweeper-highscore";
+const SCORE_KEY = "minesweeper-score";
 
 const NUMBER_COLORS = {
     1: "#3455eb",
@@ -23,6 +13,26 @@ const NUMBER_COLORS = {
     4: "#ff0d00",
     5: "#7a0600"
 };
+
+const SCORE_MAP = {
+    CELL_REVEAL_BASE: 1,
+    WIN_BONUS: TOTAL_MINES * 5
+}
+
+// GAME
+const GRID = document.getElementById("grid-container");
+let flaggedCells = 0;
+let gameOver = false;
+let revealedCells = 0;
+let firstClick = true;
+let score = 0;
+
+// INFO BOARD
+const minesLeftLabel = document.getElementById("mines-left");
+const debugPosLabel = document.getElementById("debug-pos");
+const refreshButton = document.getElementById("refresh-btn");
+const scoreLabel = document.getElementById("score");
+const highscoreLabel = document.getElementById("highscore");
 
 let GameGrid = [];
 
@@ -35,6 +45,27 @@ function OnStart()
         debugPosLabel.style.display = "none";
 
     minesLeftLabel.innerHTML = TOTAL_MINES;
+
+    let prevScore = parseInt(localStorage.getItem(SCORE_KEY));
+
+    if (prevScore)
+    {
+        score = prevScore;
+        scoreLabel.innerHTML = score;
+    }
+    else
+    {
+        score = 0;
+        scoreLabel.innerHTML = "0";
+    }
+        
+
+    let highscore = localStorage.getItem(HIGHSCORE_KEY);
+
+    if (highscore)
+        highscoreLabel.innerHTML = highscore;
+    else
+        highscoreLabel.innerHTML = "0";
 }
 
 function LoadGrid()
@@ -70,7 +101,7 @@ function LoadGrid()
         };
 
         if (DEBUG_MODE)
-            GameGrid[x][y]["hover_event"] = cell.addEventListener("mouseenter", () => debugPosLabel.innerHTML = "(" + x + "," + y + ")");
+            GameGrid[x][y]["hover_event"] = cell.addEventListener("mouseenter", () => debugPosLabel.innerHTML = GetPosAsString(GameGrid[x][y]));
 
     }
 }
@@ -174,6 +205,9 @@ function FloodFillClear(cellInfo)
     cellInfo.cell.removeEventListener("click", cellInfo.click_event);
     cellInfo.cell.removeEventListener("contextmenu", cellInfo.flag_event);
 
+    AddScore(SCORE_MAP.CELL_REVEAL_BASE);
+    Log("+ " + SCORE_MAP.CELL_REVEAL_BASE + " for revealing " + GetPosAsString(cellInfo) + " (fill)");
+
     CheckWinCondition();
 
     let adjacentMines = CountAdjacentMines(cellInfo);
@@ -219,6 +253,10 @@ function OnCellClick(cellInfo)
     else 
     {
         FloodFillClear(cellInfo);
+
+        let cellScore = SCORE_MAP.CELL_REVEAL_BASE + (CountAdjacentMines(cellInfo) * 2);
+        AddScore(cellScore);
+        Log("+ " + cellScore + " for revealing " + GetPosAsString(cellInfo));
     }
 }
 
@@ -267,7 +305,7 @@ function GameOver(won)
 {
     gameOver = true;
 
-    if (won) 
+    if (won)
     {
         for (let x = 0; x < GRID_SIZE; x++) 
         {
@@ -281,6 +319,8 @@ function GameOver(won)
             }
         }
 
+        AddScore(SCORE_MAP.WIN_BONUS);
+        Log("+ " + SCORE_MAP.WIN_BONUS + " for win");
         minesLeftLabel.innerHTML = "0";
         setTimeout(() => alert("You Win! 🎉"), 100);
     } 
@@ -288,6 +328,10 @@ function GameOver(won)
     {
         GRID.classList.add("shake");
         RevealAllMines();
+        score = 0;
+        scoreLabel.innerHTML = "0";
+        localStorage.setItem(SCORE_KEY, 0);
+        Log("SCORE SET TO 0 FOR LOSING");
         setTimeout(() => 
         {
             alert("Game Over! 💥 You hit a mine!");
@@ -325,6 +369,36 @@ function RevealAllMines()
             }
         }
     }
+}
+
+function AddScore(amount)
+{
+    score += amount;
+    scoreLabel.innerHTML = score;
+    localStorage.setItem(SCORE_KEY, score);
+    UpdateHighScore();
+}
+
+function UpdateHighScore()
+{
+    let prevHighscore = localStorage.getItem(HIGHSCORE_KEY);
+
+    if (score > prevHighscore)
+    {
+        localStorage.setItem(HIGHSCORE_KEY, score);
+        highscoreLabel.innerHTML = score;
+    }
+}
+
+function Log(message)
+{
+    if (DEBUG_MODE)
+        console.log(message);
+}
+
+function GetPosAsString(cellInfo)
+{
+    return "(" + cellInfo.x + "," + cellInfo.y + ")";
 }
 
 // bootstrap game when html document is loaded
