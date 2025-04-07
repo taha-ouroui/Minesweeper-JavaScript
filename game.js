@@ -1,6 +1,6 @@
 
 // GAME SETTINGS
-const GRID_SIZE = 20;
+const GRID_SIZE = 12;
 const DEBUG_MODE = false;
 const TOTAL_MINES = 10;
 const HIGHSCORE_KEY = "minesweeper-highscore";
@@ -25,6 +25,7 @@ let flaggedCells = 0;
 let gameOver = false;
 let revealedCells = 0;
 let firstClick = true;
+let scoreStartedWith = 0;
 let score = 0;
 
 // INFO BOARD
@@ -52,11 +53,13 @@ function OnStart()
 
     if (prevScore)
     {
+        scoreStartedWith = prevScore;
         score = prevScore;
         scoreLabel.innerHTML = score;
     }
     else
     {
+        scoreStartedWith = 0;
         score = 0;
         scoreLabel.innerHTML = "0";
     }
@@ -411,6 +414,15 @@ function GetPosAsString(cellInfo)
     return "(" + cellInfo.x + "," + cellInfo.y + ")";
 }
 
+function OnRefreshPage()
+{
+    if (!gameOver)
+    {
+        localStorage.setItem(SCORE_KEY, scoreStartedWith);
+    }
+}
+
 // bootstrap game when html document is loaded
 document.addEventListener("DOMContentLoaded", () => OnStart());
 refreshButton.addEventListener("click", () => window.location.reload());
+window.addEventListener('beforeunload', () => OnRefreshPage());
