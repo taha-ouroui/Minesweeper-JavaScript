@@ -1,10 +1,9 @@
 
 // GAME SETTINGS
-const GRID_SIZE = 12;
 const DEBUG_MODE = false;
-const TOTAL_MINES = 10;
 const HIGHSCORE_KEY = "minesweeper-highscore";
 const SCORE_KEY = "minesweeper-score";
+const DIFFICULTY_KEY = "minesweeper-difficulty";
 
 const NUMBER_COLORS = {
     1: "#3455eb",
@@ -16,17 +15,37 @@ const NUMBER_COLORS = {
 
 const SCORE_MAP = {
     CELL_REVEAL_BASE: 1,
-    WIN_BONUS: TOTAL_MINES * 5
+    WIN_BONUS: 5
+}
+
+const DIFF_MAP = {
+    EASY: {
+        size: 12,
+        mines: 10
+    },
+
+    NORMAL: {
+        size: 14,
+        mines: 20
+    },
+
+    HARD: {
+        size: 20,
+        mines: 40
+    },
 }
 
 // GAME
 const GRID = document.getElementById("grid-container");
+let GridSize = 12;
+let TotalMines = 10;
 let flaggedCells = 0;
 let gameOver = false;
 let revealedCells = 0;
 let firstClick = true;
 let scoreStartedWith = 0;
 let score = 0;
+let currDifficulty;
 
 // INFO BOARD
 const minesLeftLabel = document.getElementById("mines-left");
@@ -34,20 +53,23 @@ const debugPosLabel = document.getElementById("debug-pos");
 const refreshButton = document.getElementById("refresh-btn");
 const scoreLabel = document.getElementById("score");
 const highscoreLabel = document.getElementById("highscore");
+const difficultySelection = document.getElementById("difficulty");
 
 let GameGrid = [];
 
 // after html is loaded
 function OnStart()
 {
-    GRID.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(20px, 1fr))`;
-    GRID.style.gridTemplateRows = `repeat(${GRID_SIZE}, minmax(20px, 1fr))`;
+    LoadDifficulty();
+
+    GRID.style.gridTemplateColumns = `repeat(${GridSize}, minmax(20px, 1fr))`;
+    GRID.style.gridTemplateRows = `repeat(${GridSize}, minmax(20px, 1fr))`;
     LoadGrid();
 
     if (!DEBUG_MODE)
         debugPosLabel.style.display = "none";
 
-    minesLeftLabel.innerHTML = TOTAL_MINES;
+    minesLeftLabel.innerHTML = TotalMines;
 
     let prevScore = parseInt(localStorage.getItem(SCORE_KEY));
 
@@ -73,20 +95,63 @@ function OnStart()
         highscoreLabel.innerHTML = "0";
 
     const gridCells = document.querySelectorAll('.grid-cell');
-    const fontSize = 24 / GRID_SIZE;
+    const fontSize = 24 / GridSize;
     
     gridCells.forEach(cell => 
     {
         cell.style.fontSize = fontSize + "rem";
     });
+
+    difficultySelection.addEventListener("change", (event) => 
+    {
+        const selectedDifficulty = event.target.value;
+        localStorage.setItem(DIFFICULTY_KEY, selectedDifficulty);
+        window.location.reload();
+    });
+}
+
+function LoadDifficulty()
+{
+    currDifficulty = localStorage.getItem(DIFFICULTY_KEY);
+
+    if (!currDifficulty) 
+    {
+        currDifficulty = "easy";
+        difficultySelection.value = currDifficulty;
+    }
+
+    let diffMap;
+
+    switch(currDifficulty)
+    {
+        case "easy":
+            diffMap = DIFF_MAP.EASY;
+            break;
+
+        case "normal":
+            diffMap = DIFF_MAP.NORMAL;
+            break;
+
+        case "hard":
+            diffMap = DIFF_MAP.HARD;
+            break;
+
+        default:
+            console.log("ERROR: difficulty of type (" + currDifficulty + ") not found.")
+            diffMap = DIFF_MAP.EASY;
+            break;
+    }
+
+    GridSize = diffMap.size;
+    TotalMines = diffMap.mines;
 }
 
 function LoadGrid()
 {
-    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++)
+    for (let i = 0; i < GridSize * GridSize; i++)
     {
-        let x = i % GRID_SIZE;
-        let y = Math.floor(i / GRID_SIZE);
+        let x = i % GridSize;
+        let y = Math.floor(i / GridSize);
 
         if (GameGrid[x] === undefined)
             GameGrid[x] = [];
@@ -137,9 +202,9 @@ function LoadMines(firstClickX = -1, firstClickY = -1)
     let allCells = [];
     let placedMines = 0;
 
-    for (let x = 0; x < GRID_SIZE; x++) 
+    for (let x = 0; x < GridSize; x++) 
     {
-        for (let y = 0; y < GRID_SIZE; y++) 
+        for (let y = 0; y < GridSize; y++) 
         {
             if (x !== firstClickX && y !== firstClickY) 
             {
@@ -150,7 +215,7 @@ function LoadMines(firstClickX = -1, firstClickY = -1)
 
     allCells = shuffle(allCells);
 
-    for (let i = 0; i < allCells.length && placedMines < TOTAL_MINES; i++) 
+    for (let i = 0; i < allCells.length && placedMines < TotalMines; i++) 
     {
         let { x, y } = allCells[i];
 
@@ -177,7 +242,7 @@ function shuffle(array)
 
 function IsWithinBounds(x, y)
 {
-    return x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE;
+    return x >= 0 && x < GridSize && y >= 0 && y < GridSize;
 }
 
 function CountAdjacentMines(cellInfo)
@@ -251,7 +316,7 @@ function FloodFillClear(cellInfo)
 
 function OnCellClick(cellInfo)
 {
-    if (gameOver || cellInfo.flagged) return;
+    if (gameOver || cellInfo.flagged || cellInfo.revealed) return;
 
     if (firstClick) 
     {
@@ -303,12 +368,12 @@ function OnCellFlag(cellInfo)
         delete cellInfo.flag_img;
     }
 
-    minesLeftLabel.innerHTML = TOTAL_MINES - flaggedCells;
+    minesLeftLabel.innerHTML = TotalMines - flaggedCells;
 }
 
 function CheckWinCondition() 
 {
-    if (revealedCells === GRID_SIZE * GRID_SIZE - TOTAL_MINES)
+    if (revealedCells === GridSize * GridSize - TotalMines)
     {
         GameOver(true);
     }
@@ -320,9 +385,9 @@ function GameOver(won)
 
     if (won)
     {
-        for (let x = 0; x < GRID_SIZE; x++) 
+        for (let x = 0; x < GridSize; x++) 
         {
-            for (let y = 0; y < GRID_SIZE; y++) 
+            for (let y = 0; y < GridSize; y++) 
             {
                 if (GameGrid[x][y].is_mine && GameGrid[x][y].flag_img === undefined)
                 {
@@ -332,8 +397,8 @@ function GameOver(won)
             }
         }
 
-        AddScore(SCORE_MAP.WIN_BONUS);
-        Log("+ " + SCORE_MAP.WIN_BONUS + " for win");
+        AddScore(SCORE_MAP.WIN_BONUS * TotalMines);
+        Log("+ " + (SCORE_MAP.WIN_BONUS * TotalMines) + " for win");
         minesLeftLabel.innerHTML = "0";
         setTimeout(() => alert("You Win! 🎉"), 100);
     } 
@@ -372,9 +437,9 @@ function MineImage(cellInfo)
 
 function RevealAllMines() 
 {
-    for (let x = 0; x < GRID_SIZE; x++) 
+    for (let x = 0; x < GridSize; x++) 
     {
-        for (let y = 0; y < GRID_SIZE; y++) 
+        for (let y = 0; y < GridSize; y++) 
         {
             if (GameGrid[x][y].is_mine) 
             {
