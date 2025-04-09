@@ -101,6 +101,19 @@ body {
     font-size: 0.9rem;
 }
 
+.info-board select{
+    background-color: grey;
+    font-family: 'Pixel', 'Courier New', Courier, monospace;
+    color: white;
+    font-size: 0.9rem;
+    flex-grow: 1;
+}
+
+select option{
+    font-family: 'Pixel', 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+}
+
 .score-container {
     display: flex;
     gap: 1rem;
