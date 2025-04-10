@@ -115,10 +115,9 @@ function LoadDifficulty()
     currDifficulty = localStorage.getItem(DIFFICULTY_KEY);
 
     if (!currDifficulty) 
-    {
         currDifficulty = "easy";
-        difficultySelection.value = currDifficulty;
-    }
+
+    difficultySelection.value = currDifficulty;
 
     let diffMap;
 
