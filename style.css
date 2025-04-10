@@ -144,6 +144,7 @@ select option{
     color: white;
     font-size: 1rem;
     text-align: center;
+    margin-bottom: 20px;
 }
 
 .cell-image {
